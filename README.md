@@ -1,12 +1,20 @@
 ##About
 Brainfuck-C is a [Brainfuck](http://en.wikipedia.org/wiki/Brainfuck) interpreter written in C.
 
-##Example
+##Usage
+Compile using gcc and run:
 ```
-gcc brainfuck.c -o bf
-echo "++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>." | ./bf
+./bf filename
 ```
-Also try running [this](http://www.99-bottles-of-beer.net/language-brainfuck-1718.html) code.
+
+##Examples
+```
+./bf hw.bf
+```
+```
+curl -s "http://www.99-bottles-of-beer.net/download/1718" > bottles.bf
+./bf bottles.bf
+```
 
 ##License
 [The MIT License (MIT)](http://opensource.org/licenses/mit-license.php)

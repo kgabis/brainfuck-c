@@ -33,8 +33,8 @@
 #define OP_JMP_FWD      7
 #define OP_JMP_BCK      8
 
-#define SUCCESS         1
-#define FAILURE         0
+#define SUCCESS         0
+#define FAILURE         1
 
 #define PROGRAM_SIZE    4096
 #define STACK_SIZE      512
@@ -54,10 +54,10 @@ static unsigned int PROGRAM[PROGRAM_SIZE];
 static unsigned int STACK[STACK_SIZE];
 static unsigned int SP = 0;
 
-int compile_bf() {
+int compile_bf(FILE* fp) {
     unsigned int pc = 0, jmp_pc;
     int c;
-    while ((c = getchar()) != EOF && pc < PROGRAM_SIZE) {
+    while ((c = getc(fp)) != EOF && pc < PROGRAM_SIZE) {
         switch (c) {
             case '>': SET_OP(PROGRAM[pc], OP_INC_DP); break;
             case '<': SET_OP(PROGRAM[pc], OP_DEC_DP); break;
@@ -118,16 +118,20 @@ int execute_bf() {
 int main(int argc, const char * argv[])
 {
     int status;
-    status = compile_bf();
+    FILE *fp;
+    if (argc != 2 || (fp = fopen(argv[1], "r")) == NULL) {
+        fprintf(stderr, "Usage: %s filename\n", argv[0]);
+        return FAILURE;
+    }
+    status = compile_bf(fp);
+    fclose(fp);
     if (status == SUCCESS) {
         status = execute_bf();
     }
     if (status == FAILURE) {
         fprintf(stderr, "Error!\n");
-        return 1;
     }
-    printf("\n");
-    return 0;
+    return status;
 }
 
 
