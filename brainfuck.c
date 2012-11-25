@@ -105,8 +105,7 @@ int execute_bf() {
             case OP_IN: data[ptr] = (unsigned int)getchar(); break;
             case OP_JMP_FWD: if(!data[ptr]) { pc = GET_JMP(PROGRAM[pc]); } break;
             case OP_JMP_BCK: if(data[ptr]) { pc = GET_JMP(PROGRAM[pc]); } break;
-            default:
-                return FAILURE;
+            default: return FAILURE;
         }
         pc++;
     }
