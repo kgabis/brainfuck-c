@@ -38,35 +38,35 @@
 
 #define PROGRAM_SIZE    4096
 #define STACK_SIZE      512
-#define DATA_SIZE       40000
-
-#define SET_OP(A, OP)   (A = (A & 0) | OP)
-#define GET_OP(A)       (A & 0xf)
-#define SET_JMP(A, POS) (A = A | (POS << 4))
-#define GET_JMP(A)      (A >> 4)
+#define DATA_SIZE       65535
 
 #define STACK_PUSH(A)   (STACK[SP++] = A)
 #define STACK_POP()     (STACK[--SP])
 #define STACK_EMPTY()   (SP == 0)
 #define STACK_FULL()    (SP == STACK_SIZE)
 
-static unsigned int PROGRAM[PROGRAM_SIZE];
-static unsigned int STACK[STACK_SIZE];
+struct instruction_t {
+    unsigned short operator;
+    unsigned short operand;
+};
+
+static struct instruction_t PROGRAM[PROGRAM_SIZE];
+static unsigned short STACK[STACK_SIZE];
 static unsigned int SP = 0;
 
 int compile_bf(FILE* fp) {
-    unsigned int pc = 0, jmp_pc;
+    unsigned short pc = 0, jmp_pc;
     int c;
     while ((c = getc(fp)) != EOF && pc < PROGRAM_SIZE) {
         switch (c) {
-            case '>': SET_OP(PROGRAM[pc], OP_INC_DP); break;
-            case '<': SET_OP(PROGRAM[pc], OP_DEC_DP); break;
-            case '+': SET_OP(PROGRAM[pc], OP_INC_VAL); break;
-            case '-': SET_OP(PROGRAM[pc], OP_DEC_VAL); break;
-            case '.': SET_OP(PROGRAM[pc], OP_OUT); break;
-            case ',': SET_OP(PROGRAM[pc], OP_IN); break;
+            case '>': PROGRAM[pc].operator = OP_INC_DP; break;
+            case '<': PROGRAM[pc].operator = OP_DEC_DP; break;
+            case '+': PROGRAM[pc].operator = OP_INC_VAL; break;
+            case '-': PROGRAM[pc].operator = OP_DEC_VAL; break;
+            case '.': PROGRAM[pc].operator = OP_OUT; break;
+            case ',': PROGRAM[pc].operator = OP_IN; break;
             case '[':
-                SET_OP(PROGRAM[pc], OP_JMP_FWD);
+                PROGRAM[pc].operator = OP_JMP_FWD;
                 if (STACK_FULL()) {
                     return FAILURE;
                 }
@@ -77,9 +77,9 @@ int compile_bf(FILE* fp) {
                     return FAILURE;
                 }
                 jmp_pc = STACK_POP();
-                SET_OP(PROGRAM[pc], OP_JMP_BCK);
-                SET_JMP(PROGRAM[pc], jmp_pc);
-                SET_JMP(PROGRAM[jmp_pc], pc);
+                PROGRAM[pc].operator =  OP_JMP_BCK;
+                PROGRAM[pc].operand = jmp_pc;
+                PROGRAM[jmp_pc].operand = pc;
                 break;
             default: pc--; break;
         }
@@ -88,31 +88,28 @@ int compile_bf(FILE* fp) {
     if (!STACK_EMPTY() || pc == PROGRAM_SIZE) {
         return FAILURE;
     }
-    SET_OP(PROGRAM[pc], OP_END);
+    PROGRAM[pc].operator = OP_END;
     return SUCCESS;
 }
 
 int execute_bf() {
-    unsigned int data[DATA_SIZE], ptr = DATA_SIZE, pc = 0;
+    unsigned short data[DATA_SIZE], ptr = DATA_SIZE, pc = 0;
     while (--ptr) { data[ptr] = 0; }
-    while (GET_OP(PROGRAM[pc]) != OP_END && ptr < DATA_SIZE) {
-        switch (GET_OP(PROGRAM[pc])) {
+    while (PROGRAM[pc].operator != OP_END && ptr < DATA_SIZE) {
+        switch (PROGRAM[pc].operator) {
             case OP_INC_DP: ptr++; break;
             case OP_DEC_DP: ptr--; break;
             case OP_INC_VAL: data[ptr]++; break;
             case OP_DEC_VAL: data[ptr]--; break;
             case OP_OUT: putchar(data[ptr]); break;
             case OP_IN: data[ptr] = (unsigned int)getchar(); break;
-            case OP_JMP_FWD: if(!data[ptr]) { pc = GET_JMP(PROGRAM[pc]); } break;
-            case OP_JMP_BCK: if(data[ptr]) { pc = GET_JMP(PROGRAM[pc]); } break;
+            case OP_JMP_FWD: if(!data[ptr]) { pc = PROGRAM[pc].operand; } break;
+            case OP_JMP_BCK: if(data[ptr]) { pc = PROGRAM[pc].operand; } break;
             default: return FAILURE;
         }
         pc++;
     }
-    if (ptr == DATA_SIZE) {
-        return FAILURE;
-    }
-    return SUCCESS;
+    return ptr != DATA_SIZE ? SUCCESS : FAILURE;
 }
 
 int main(int argc, const char * argv[])
@@ -133,5 +130,3 @@ int main(int argc, const char * argv[])
     }
     return status;
 }
-
-
