@@ -1,13 +1,14 @@
-
 PREFIX ?= /usr/local
 SRC = brainfuck.c
-CFLAGS = -std=c99
+CFLAGS = -std=c99 -Wall -pedantic
 BIN = bf
+
+.PHONY: clean uninstall
 
 $(BIN):
 	$(CC) $(SRC) $(CFLAGS) -o $@
 
-install:
+install: $(BIN)
 	install $(BIN) $(PREFIX)/bin
 
 clean:
